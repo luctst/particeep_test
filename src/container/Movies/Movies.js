@@ -10,70 +10,34 @@ function Movies() {
     data: [],
     currentPage: 1,
     filters: {
-      category: "Comedy"
+      categories: [],
+      categorySelected: "Comedy"
     }
   })
 
-  const [dataCategory, setDataCategory] = useState({
-    categories: []
-  });
-
-  // const [dataLike, setDataLike] = useState({
-  //   likes: null,
-  //   dislikes: null
-  // })
-
   useEffect(() => {
-    movies$.then(function (value) {
-      setData({
-        data: value,
-        currentPage: 1,
-        filters: {
-          category: "Comedy"
-        }
-      })
-    })
-  }, [data.filters.category])
+    (async function () {
+      const newState = {...data};
+      const dataMovies = await movies$;
+      const categoriesArray = [];
 
-  // function getList(page) {
-  //   movies$.then(function (value) {
-  //     setData({
-  //       data: value,
-  //       currentPage: page,
-  //     })
-  //   })
-  // }
+      dataMovies.forEach(item => categoriesArray.includes(item.category) ? null : categoriesArray.push(item.category));
+      newState.data = [...dataMovies]; 
+      newState.filters.categories = [...categoriesArray];
 
-  // useEffect(() => {
-  //   getList(data.currentPage)
-  // }, [])
+      setData(newState);
+    })()
+  }, [])
+  
+  function deleteCard(index) {
+    const newState = {...data};
 
-  // function handleChangePage(page) {
-  //   getList(page)
-  // }
-
-  console.log(data.data);
-
-  function deleteCard(el, index) {
-    const newState = [...data.data];
-    newState.splice(index, 1);
-    setData({data: newState});
-    // el.target.parentNode.parentNode.parentNode.remove(el.target);
+    newState.data.splice(index, 1);
+    setData(newState);
   }
 
   function toggleFunction(e) {
     if (e.target.className === "fas fa-thumbs-up") {
-      // const newState =[...data.data];
-
-      // newState.map((card, index) => {
-      //   console.log(card.likes);
-      //   setDataLike({
-      //     likes: card.likes,
-      //     dislikes: card.dislikes
-      //   })
-      // })
-      // console.log(dataLike);
-
       e.target.classList.remove("fa-thumbs-up");
       e.target.classList.add("fa-thumbs-down");
     } else {
@@ -82,60 +46,38 @@ function Movies() {
     }
   }
 
-  function allCategories() {
-    const newState = {...dataCategory};
+  function handleOnChangeCategory(e) {
+    const newState = {...data};
+    newState.filters.categorySelected = e.target.value;
 
-    data.data.map(movie => {
-      newState.categories.push(movie.category);
-    })
-  }
-  allCategories()
-  
-  function handleOnChangeCategory(element) {
-    const newState = {...data}
-    console.log(newState);
-    console.log(element.target.value);
-    newState.filters[element.target.id] = element.target.value;
-    setData({
-      data: newState,
-      currentPage: 1,
-      filters: {
-        category: element.target.value
-      }
-    });
-
+    setData(newState);
   }
 
   return(
     <React.Fragment>
     <MoviesStyled className="container container--cards">
       <CategoriesStyled className="categories">
-          <select className="categories--select" onChange={el => handleOnChangeCategory(el)}>
+          <select className="categories--select" onChange={handleOnChangeCategory}>
             {
-              function () {
-                const movieCategory = [...new Set(data.data.map(movie => {
-                  return movie.category
-                  })
-                )]
-                return movieCategory.map(category => {
-                  return (
-                    <option value={category} key={category}>{category}</option>
-                  )
-                })
-              }()
+              data.filters.categories.map(category => <option value={category} key={category}>{category}</option>)
             }
           </select>
         </CategoriesStyled>
         <div className="row cards">
           {
             function () {
-              if (data.data.length === 0){
-                return "loading";
-              } else {
-                return data.data.map((movie, index) => {
-                  return <MovieCard data={movie} key={index} deletedButton={(el) => deleteCard(el, index)} toggleLike={toggleFunction} />
-                })
-              }
+              if (data.data.length === 0) return "loading";
+
+              return data.data.map((movie, index) => {
+                if (movie.category === data.filters.categorySelected) {
+                  return <MovieCard 
+                            data={movie} 
+                            key={index} 
+                            deletedButton={() => deleteCard(index)} 
+                            toggleLike={toggleFunction} 
+                          />
+                }
+              })
             }()
           }
         </div>
