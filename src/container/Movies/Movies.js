@@ -11,7 +11,7 @@ function Movies() {
     currentPage: 1,
     filters: {
       categories: [],
-      categorySelected: "Comedy"
+      categorySelected: "All"
     }
   })
 
@@ -22,6 +22,7 @@ function Movies() {
       const categoriesArray = [];
 
       dataMovies.forEach(item => categoriesArray.includes(item.category) ? null : categoriesArray.push(item.category));
+      categoriesArray.push("All");
       newState.data = [...dataMovies]; 
       newState.filters.categories = [...categoriesArray];
 
@@ -68,16 +69,27 @@ function Movies() {
             function () {
               if (data.data.length === 0) return "loading";
 
+              if (data.filters.categorySelected !== "All") {
+                return data.data.map((movie, index) => {
+                  if (movie.category === data.filters.categorySelected) {
+                    return <MovieCard 
+                              data={movie} 
+                              key={index} 
+                              deletedButton={() => deleteCard(index)} 
+                              toggleLike={toggleFunction} 
+                            />
+                  }
+                })
+              }
+
               return data.data.map((movie, index) => {
-                if (movie.category === data.filters.categorySelected) {
-                  return <MovieCard 
-                            data={movie} 
-                            key={index} 
-                            deletedButton={() => deleteCard(index)} 
-                            toggleLike={toggleFunction} 
-                          />
-                }
-              })
+                return <MovieCard
+                  data={movie}
+                  key={index}
+                  deletedButton={() => deleteCard(index)}
+                  toggleLike={toggleFunction}
+                />
+              });
             }()
           }
         </div>
